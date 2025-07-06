@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>📸 Take a Photo</title>
+  <style>
+    video, canvas { width: 100%; max-width: 400px; border-radius: 10px; }
+    #capture-btn, #submit-btn { margin-top: 10px; }
+  </style>
+</head>
+<body>
+  <h2>📷 사진 찍고 공유하기</h2>
+
+  <video id="video" autoplay playsinline></video>
+  <canvas id="canvas" style="display: none;"></canvas>
+  <br>
+  <button id="capture-btn">사진 찍기</button>
+
+  <form id="upload-form">
+    <input type="text" id="hashtags" placeholder="#myhome #light" required><br>
+    <input type="hidden" id="photoData" name="photoData">
+    <button type="submit" id="submit-btn">업로드</button>
+  </form>
+
+  <script>
+    const video = document.getElementById("video");
+    const canvas = document.getElementById("canvas");
+    const captureBtn = document.getElementById("capture-btn");
+    const form = document.getElementById("upload-form");
+    const photoDataInput = document.getElementById("photoData");
+
+    // 카메라 접근
+    navigator.mediaDevices.getUserMedia({ video: true }).then(stream => {
+      video.srcObject = stream;
+    });
+
+    // 사진 촬영
+    captureBtn.onclick = () => {
+      const ctx = canvas.getContext("2d");
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      const imageData = canvas.toDataURL("image/jpeg");
+      photoDataInput.value = imageData;
+      alert("사진이 캡처되었습니다!");
+    };
+
+    // 서버로 전송
+    form.onsubmit = async (e) => {
+      e.preventDefault();
+      const hashtags = document.getElementById("hashtags").value;
+      const photoData = photoDataInput.value;
+
+      const res = await fetch("/functions/upload", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ hashtags, photoData })
+      });
+
+      const result = await res.json();
+      alert("✅ 업로드 완료: " + result.path);
+    };
+  </script>
+</body>
+</html>
